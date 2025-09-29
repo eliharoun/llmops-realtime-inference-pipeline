@@ -18,6 +18,18 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    - name: Free up disk space (before build)
+      run: |
+        echo "Disk before cleanup:"
+        df -h
+        # Remove large pre-installed packages we don’t need
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/share/dotnet
+        docker system prune -af || true
+        echo "Disk after cleanup:"
+        df -h
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -37,7 +49,6 @@ jobs:
 
     - name: Login to ECR
       run: |
-        # Ensure ECR repository exists
         aws ecr describe-repositories --repository-names $ECR_REPOSITORY --region $AWS_REGION || \
         aws ecr create-repository --repository-name $ECR_REPOSITORY --region $AWS_REGION
 
@@ -45,37 +56,33 @@ jobs:
 
     - name: Build BentoML Service and Push to ECR
       run: |
-        # Build BentoML service
         bentoml build
-        
-        # Get the service tag
         BENTO_SERVICE=$(bentoml list --output json | jq -r '.[0].tag')
         echo "Built BentoML service: $BENTO_SERVICE"
         
-        # Containerize with BentoML (builds for AMD64 by default)
         bentoml containerize $BENTO_SERVICE --platform linux/amd64
         
-        # Generate image tag
         IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
         
-        # Tag for ECR
         docker tag $BENTO_SERVICE $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         docker tag $BENTO_SERVICE $ECR_REGISTRY/$ECR_REPOSITORY:latest
         
-        # Push to ECR
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
         
         echo "IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
 
+    - name: Cleanup Docker space (after push)
+      run: |
+        docker system prune -af --volumes || true
+        df -h
+
     - name: Install kubectl and Helm
       run: |
-        # Install kubectl
         curl -LO "https://dl.k8s.io/release/v1.28.0/bin/linux/amd64/kubectl"
         chmod +x kubectl
         sudo mv kubectl /usr/local/bin/
         
-        # Install Helm
         curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
     - name: Verify EKS Cluster Access
@@ -86,7 +93,6 @@ jobs:
 
     - name: Deploy to EKS
       run: |
-        # Get the commit SHA for image tagging
         IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
         echo "Deploying with image tag: $IMAGE_TAG"
 
@@ -95,6 +101,5 @@ jobs:
           --set image.tag=$IMAGE_TAG \
           --wait --timeout=900s
 
-        # Validate deployment
         kubectl get pods -n llm -l app=llm-inference-service
         kubectl get svc -n llm -l app=llm-inference-service
