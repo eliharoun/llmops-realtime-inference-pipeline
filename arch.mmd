@@ -1,0 +1,21 @@
+flowchart TD
+    A[GitHub Repo] --> B[GitHub Actions]
+    B --> C[AWS ECR]
+
+    C --> D[EKS Cluster<br/>Pods]
+
+    subgraph " "
+        D --> E[Kubernetes Service]
+        E --> F[Load Balancer]
+    end
+
+    F --> G[End Users]
+
+    subgraph Monitoring
+        H[Prometheus]
+        I[Grafana]
+    end
+
+    H --> J[Metrics / Dashboards]
+    I --> J
+    J --> G

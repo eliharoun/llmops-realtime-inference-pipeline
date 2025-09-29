@@ -1,3 +1,16 @@
-service: src.service:LLMInference
+service: "src.service:LLMInference"
+labels:
+  owner: elias-haroun
+  project: llmops-realtime-inference
+
 include:
-  - src/**
+  - "src/"
+  - "k8s/"
+  - "requirements.txt"
+
+python:
+  requirements_txt: "requirements.txt"
+
+docker:
+  distro: debian
+  python_version: "3.9"

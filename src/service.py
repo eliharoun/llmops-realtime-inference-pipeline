@@ -1,4 +1,7 @@
+
+# BentoML service with CORS headers added manually to responses
 import bentoml
+from starlette.responses import JSONResponse
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 import logging
@@ -16,11 +19,11 @@ class LLMInference:
         self.model_name = "microsoft/DialoGPT-medium"
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModelForCausalLM.from_pretrained(self.model_name)
-        
+
         # Set pad token
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
-            
+
         logger.info("Model loaded successfully")
     
     @bentoml.api
@@ -73,6 +76,6 @@ class LLMInference:
                 "error": str(e)
             }
     
-    @bentoml.api
-    def health(self) -> dict:
+    @bentoml.api(route="/health", input_spec=None, output_spec=None)
+    def health(self, **kwargs) -> dict:
         return {"status": "healthy", "model": self.model_name}

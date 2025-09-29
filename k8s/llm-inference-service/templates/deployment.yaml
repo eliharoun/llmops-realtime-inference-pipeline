@@ -28,15 +28,24 @@ spec:
             requests:
               cpu: {{ .Values.resources.requests.cpu }}
               memory: {{ .Values.resources.requests.memory }}
+          env:
+            - name: BENTOML_CORS_ENABLED
+              value: "true"
+            - name: BENTOML_CORS_ALLOW_ORIGINS
+              value: '["*"]'
+            - name: BENTOML_CORS_ALLOW_METHODS
+              value: '["GET", "POST", "OPTIONS"]'
+            - name: BENTOML_CORS_ALLOW_HEADERS
+              value: '["*"]'
+            - name: BENTOML_CORS_ALLOW_CREDENTIALS
+              value: "true"
           readinessProbe:
-            httpGet:
-              path: /healthz
-              port: {{ .Values.service.targetPort }}
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /healthz
+            tcpSocket:
               port: {{ .Values.service.targetPort }}
             initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: 60
             periodSeconds: 30

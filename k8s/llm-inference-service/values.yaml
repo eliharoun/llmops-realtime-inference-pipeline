@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: 546338373444.dkr.ecr.us-east-1.amazonaws.com/llm-inference
-  tag: "latest"
+  tag: latest
   pullPolicy: IfNotPresent
 
 service:
@@ -13,15 +13,15 @@ service:
 resources:
   limits:
     cpu: 2000m
-    memory: 4Gi
+    memory: 6Gi
   requests:
     cpu: 1000m
-    memory: 2Gi
+    memory: 4Gi
 
 autoscaling:
   enabled: true
   minReplicas: 2
-  maxReplicas: 10
+  maxReplicas: 4
   targetCPUUtilizationPercentage: 70
 
 serviceAccount:
