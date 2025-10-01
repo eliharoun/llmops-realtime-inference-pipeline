@@ -7,7 +7,7 @@ A production-grade deployment of a Large Language Model (LLM) inference service 
 
 ### Architecture
 
-![Architecture](arch.jpeg)
+![Architecture](arch.png)
 
 ## Prerequisites
 
