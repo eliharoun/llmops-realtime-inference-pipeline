@@ -3,8 +3,20 @@ name: Deploy LLM Service
 on:
   push:
     branches: [ main, demo-changes ]
+    paths:
+      - 'src/**'
+      - 'k8s/**'
+      - 'requirements.txt'
+      - 'bentoml.yaml'
+      - '.github/workflows/**'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'k8s/**'
+      - 'requirements.txt'
+      - 'bentoml.yaml'
+      - '.github/workflows/**'
 
 env:
   AWS_REGION: us-east-1
@@ -15,6 +27,8 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Skip deployment if commit message contains skip instructions
+    if: "!contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip deploy]') && !contains(github.event.head_commit.message, '[no ci]')"
     steps:
     - uses: actions/checkout@v3
     
